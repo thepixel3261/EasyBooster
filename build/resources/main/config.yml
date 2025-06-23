@@ -1,0 +1,17 @@
+gui:
+  name: "§6§lBooster"
+  rows: 3
+  filler: "GRAY_STAINED_GLASS_PANE"
+
+boosters:
+  example: # ID of the booster
+    displayname: "§6Example Booster"
+    lore:
+      - "§7This is"
+      - "§7an example"
+    icon: "DIAMOND"
+    slot: 13 #check:https://proxy.spigotmc.org/286cf93278ca679cec0f2a40528fd830418b75d4a/687474703a2f2f692e696d6775722e636f6d2f674b39706c476f2e706e67
+    effect:
+      - "fly"
+      - "speed:2" #check:https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/potion/PotionEffectType.html (name:amplifier)
+    duration: 45 #(in seconds)

@@ -1,0 +1,1 @@
+Just a simple Booster Plugin for Minecraft Servers.

@@ -1,0 +1,14 @@
+name: EasyBooster
+version: '1.0.0'
+main: de.thepixel3261.easyBooster.Main
+api-version: '1.21'
+load: STARTUP
+commands:
+  booster:
+    permission: booster.command
+    description: 'Booster command to GUI'
+    usage: "/booster"
+permissions:
+  booster.command:
+    description: 'Permission to use the booster command'
+    default: true
