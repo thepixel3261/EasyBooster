@@ -12,14 +12,14 @@ import org.bukkit.entity.Player
 class BoosterCommand(plugin: Main) : CommandExecutor, TabCompleter {
     val plugin: Main = plugin
     override fun onCommand(player: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
-        if (player !is Player) {
+        if (player !is Player && args?.size == 0) {
             player.sendMessage("You have to be a Player to execute this command!")
             return true
         }
 
         when(args?.size) {
             0 -> {
-                BoosterGUI(plugin).openBoosterGUI(player)
+                BoosterGUI(plugin).openBoosterGUI(player as Player)
                 return true
             }
             1 -> {
@@ -37,12 +37,12 @@ class BoosterCommand(plugin: Main) : CommandExecutor, TabCompleter {
                     }
                 }
             }
-            2 -> {
+            3 -> {
                 if (args[0] == "give") {
                     if (player.hasPermission("easybooster.give")) {
-                        val target = plugin.server.getPlayer(args[1])
+                        val target = plugin.server.getPlayer(args[2])
                         if (target != null) {
-                            val booster = args[2]
+                            val booster = args[1]
                             plugin.config.getConfigurationSection("boosters")?.getKeys(false)?.forEach {
                                 if (it == booster) {
                                     StorageManager(plugin).giveBooster(target, booster, 1)
@@ -54,12 +54,12 @@ class BoosterCommand(plugin: Main) : CommandExecutor, TabCompleter {
                     }
                 }
             }
-            3 -> {
+            4 -> {
                 if (args[0] == "give") {
                     if (player.hasPermission("easybooster.give")) {
-                        val target = plugin.server.getPlayer(args[1])
+                        val target = plugin.server.getPlayer(args[2])
                         if (target != null) {
-                            val booster = args[2]
+                            val booster = args[1]
                             val amount = args[3].toInt()
                             plugin.config.getConfigurationSection("boosters")?.getKeys(false)?.forEach {
                                 if (it == booster) {
@@ -84,11 +84,18 @@ class BoosterCommand(plugin: Main) : CommandExecutor, TabCompleter {
         val player = sender as Player
         var completes: MutableList<String> = mutableListOf()
         when (args?.size) {
-            0 -> {
+            1 -> {
                 completes.add("reload")
                 completes.add("give")
             }
-            1 -> {
+            2 -> {
+                if (args[0] == "give" && player.hasPermission("easybooster.give")) {
+                    plugin.config.getConfigurationSection("boosters")?.getKeys(false)?.forEach {
+                        completes.add(it)
+                    }
+                }
+            }
+            3 -> {
                 if (args[0] == "give" && player.hasPermission("easybooster.give")) {
                     plugin.server.onlinePlayers.forEach {
                         completes.add(it.name)

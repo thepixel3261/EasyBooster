@@ -1,17 +1,40 @@
 gui:
-  name: "§6§lBooster"
+  name: "§6§l%player_name%´s Boosters"
   rows: 3
   filler: "GRAY_STAINED_GLASS_PANE"
 
+storage:
+  type: "YAML" #(YAML or MYSQL)
+  mysql:
+    host: "localhost"
+    port: 3306
+    database: "database"
+    username: "username"
+    password: "password"
+
 boosters:
   example: # ID of the booster
-    displayname: "§6Example Booster"
+    #displayname: "§6Example Booster" #(optional because default)
     lore:
-      - "§7This is"
-      - "§7an example"
-    icon: "DIAMOND"
+      #- "§7This is an example booster" #(optional because default)
+    icon:
+      "off": DIAMOND
+      "on": EMERALD
     slot: 13 #check:https://proxy.spigotmc.org/286cf93278ca679cec0f2a40528fd830418b75d4a/687474703a2f2f692e696d6775722e636f6d2f674b39706c476f2e706e67
     effect:
       - "fly"
       - "speed:2" #check:https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/potion/PotionEffectType.html (name:amplifier)
     duration: 45 #(in seconds)
+
+booster:
+  default: # values only taken if not specified in the booster
+    displayname: "§6%booster-name% Booster"
+    "off":
+      lore:
+        - "§6%amount-left% §9left"
+        - "%booster-duration% Seconds"
+        - "%booster-effects%"
+    "on":
+      lore:
+        - "§6%amount-left% §9left"
+        - "[%time-left%] time left"

@@ -15,7 +15,7 @@ class StorageManager(private val plugin: Main) {
     private var connection: Connection? = null
 
     init {
-        storage = plugin.config.getString("storage-type", "yml").toString()
+        storage = plugin.config.getString("storage.type", "YAML").toString()
 
         if (storage == "mysql") {
             initializeMySQL()
@@ -30,11 +30,11 @@ class StorageManager(private val plugin: Main) {
 
     private fun initializeMySQL() {
         try {
-            val host = plugin.config.getString("mysql.host", "localhost")
-            val port = plugin.config.getInt("mysql.port", 3306)
-            val database = plugin.config.getString("mysql.database", "easybooster")
-            val username = plugin.config.getString("mysql.username", "root")
-            val password = plugin.config.getString("mysql.password", "")
+            val host = plugin.config.getString("storage.mysql.host", "localhost")
+            val port = plugin.config.getInt("storage.mysql.port", 3306)
+            val database = plugin.config.getString("storage.mysql.database", "easybooster")
+            val username = plugin.config.getString("storage.mysql.username", "root")
+            val password = plugin.config.getString("storage.mysql.password", "")
 
             connection = DriverManager.getConnection(
                 "jdbc:mysql://$host:$port/$database?useSSL=false&autoReconnect=true",
@@ -61,7 +61,7 @@ class StorageManager(private val plugin: Main) {
     }
 
     fun takeBooster(player: Player, boosterName: String, amount: Int) {
-        if (storage == "yml") {
+        if (storage == "YAML") {
             takeBoosterYML(player, boosterName, amount)
         } else if (storage == "mysql") {
             takeBoosterMySQL(player, boosterName, amount)
@@ -69,7 +69,7 @@ class StorageManager(private val plugin: Main) {
     }
 
     fun giveBooster(player: Player, boosterName: String, amount: Int) {
-        if (storage == "yml") {
+        if (storage == "YAML") {
             giveBoosterYML(player, boosterName, amount)
         } else if (storage == "mysql") {
             giveBoosterMySQL(player, boosterName, amount)
@@ -77,7 +77,7 @@ class StorageManager(private val plugin: Main) {
     }
 
     fun getBoosterAmount(player: Player, boosterName: String): Int {
-        return if (storage == "yml") {
+        return if (storage == "YAML") {
             getBoosterAmountYML(player, boosterName)
         } else if (storage == "mysql") {
             getBoosterAmountMySQL(player, boosterName)
@@ -87,7 +87,7 @@ class StorageManager(private val plugin: Main) {
     }
 
     fun getAllBoosters(player: Player): Map<String, Int> {
-        return if (storage == "yml") {
+        return if (storage == "YAML") {
             getAllBoostersYML(player)
         } else if (storage == "mysql") {
             getAllBoostersMySQL(player)

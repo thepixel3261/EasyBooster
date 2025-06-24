@@ -12,3 +12,6 @@ permissions:
   booster.command:
     description: 'Permission to use the booster command'
     default: true
+  booster.give:
+    description: 'Permission to give boosters'
+    default: op

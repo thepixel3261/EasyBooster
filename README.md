@@ -1,1 +1,1 @@
-Just a simple Booster Plugin for Minecraft Servers.
+Just a simple, highly customizable Booster Plugin for Minecraft Servers.

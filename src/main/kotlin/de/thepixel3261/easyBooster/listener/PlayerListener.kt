@@ -10,6 +10,6 @@ class PlayerListener(plugin: Main) : Listener {
     val plugin: Main = plugin
     @EventHandler
     fun onPlayerJoin(event: PlayerQuitEvent) {
-        BoosterManager(plugin).removeAllBoosters(event.player)
+        BoosterManager.getInstance(plugin).removeAllBoosters(event.player)
     }
 }

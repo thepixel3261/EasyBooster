@@ -1,7 +1,6 @@
 package de.thepixel3261.easyBooster
 
 import de.thepixel3261.easyBooster.command.BoosterCommand
-import de.thepixel3261.easyBooster.gui.BoosterGUI
 import de.thepixel3261.easyBooster.gui.BoosterGUIListener
 import de.thepixel3261.easyBooster.listener.PlayerListener
 import de.thepixel3261.easyBooster.manager.BoosterManager
@@ -9,6 +8,9 @@ import de.thepixel3261.easyBooster.manager.StorageManager
 import org.bukkit.plugin.java.JavaPlugin
 
 class Main : JavaPlugin() {
+
+    lateinit var boosterManager: BoosterManager
+        private set
 
     override fun onEnable() {
         //register commands + tabcompleter
@@ -21,11 +23,14 @@ class Main : JavaPlugin() {
 
         //initialize
         StorageManager(this)
+        boosterManager = BoosterManager.getInstance(this)
         saveDefaultConfig()
     }
 
     override fun onDisable() {
-        BoosterManager(this).removeAllBoosters()
+        if (::boosterManager.isInitialized) {
+            boosterManager.removeAllBoosters()
+        }
         StorageManager(this).closeConnection()
     }
 }

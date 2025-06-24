@@ -17,7 +17,9 @@ class BoosterGUIListener(val plugin: Main): Listener {
             val slot = event.slot
             plugin.config.getConfigurationSection("boosters")?.getKeys(false)?.forEach {
                 if (plugin.config.getInt("boosters.$it.slot") == slot) {
-                    BoosterManager(plugin).applyBooster(player, it)
+                    BoosterManager.getInstance(plugin).applyBooster(player, it)
+                    player.closeInventory()
+                    BoosterGUI(plugin).openBoosterGUI(player)
                 }
             }
         }
