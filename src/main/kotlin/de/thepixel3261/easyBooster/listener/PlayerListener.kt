@@ -6,10 +6,9 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerQuitEvent
 
-class PlayerListener(plugin: Main) : Listener {
-    val plugin: Main = plugin
+class PlayerListener(val plugin: Main) : Listener {
     @EventHandler
-    fun onPlayerJoin(event: PlayerQuitEvent) {
+    fun onPlayerQuit(event: PlayerQuitEvent) {
         BoosterManager.getInstance(plugin).removeAllBoosters(event.player)
     }
 }

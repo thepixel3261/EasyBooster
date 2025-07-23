@@ -1,4 +1,4 @@
-package de.thepixel3261.easyBooster.gui;
+package de.thepixel3261.easyBooster.gui
 
 import de.thepixel3261.easyBooster.Main
 import de.thepixel3261.easyBooster.manager.BoosterManager
@@ -18,9 +18,11 @@ class BoosterGUI(val plugin: Main) {
 
         var gui: Inventory = Bukkit.createInventory(BoosterGUIHolder(rows * 9, guiName), rows * 9, guiName)
 
-        val filler = ItemStack(Material.valueOf(plugin.config.getString("gui.filler", "GRAY_STAINED_GLASS_PANE").toString()))
-        filler.itemMeta.setDisplayName("")
-        filler.itemMeta.setLore(listOf(""))
+        var filler = ItemStack(Material.valueOf(plugin.config.getString("gui.filler", "GRAY_STAINED_GLASS_PANE").toString()))
+        var fillerMeta = filler.itemMeta
+        fillerMeta?.setDisplayName(" ")
+        filler.itemMeta = fillerMeta
+
         for (i in 0 until rows * 9) {
             gui.setItem(i, filler)
         }

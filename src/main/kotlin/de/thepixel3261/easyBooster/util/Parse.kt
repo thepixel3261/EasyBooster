@@ -13,14 +13,23 @@ class Parse(private val plugin: Main) {
         var parsedText = text.replace("%player_name%", playerName)
             .replace("%player_uuid%", playerUUID)
 
+        var boosterDisplayName = ""
+        if (text.contains("%booster-display-name%")) {
+            boosterDisplayName = BoosterManager.getInstance(plugin).getBoosterDisplayName(boosterName, player)
+        }
+
         val boosterAmount = StorageManager(plugin).getBoosterAmount(player, boosterName)
         val boosterTimeLeft = BoosterManager.getInstance(plugin).getBoosterTimeLeft(player, boosterName)
         val boosterDescription = plugin.config.getString("boosters.$boosterName.description", "")!!
-        val boosterEffects = plugin.config.getStringList("boosters.$boosterName.effect")!!
+        var boosterEffects = plugin.config.getStringList("boosters.$boosterName.effect")
+        if (plugin.config.getStringList("boosters.$boosterName.effectTranslation").isNotEmpty()) {
+            boosterEffects = plugin.config.getStringList("boosters.$boosterName.effectTranslation")
+        }
         val effectString = boosterEffects.joinToString(", ")
 
         var parsedText2 = parsedText.replace("%amount-left%", boosterAmount.toString())
             .replace("%booster-name%", boosterName)
+            .replace("%booster-display-name%", boosterDisplayName)
             .replace("%time-left%", parseTime(boosterTimeLeft))
             .replace("%description%", boosterDescription)
             .replace("%booster-effects%", effectString)
@@ -42,12 +51,20 @@ class Parse(private val plugin: Main) {
         val hours = seconds / 3600
         val minutes = (seconds % 3600) / 60
         val seconds = seconds % 60
-        if (hours != 0L) {
-            return "$hours:$minutes:$seconds"
-        } else if (minutes != 0L) {
-            return "$minutes:$seconds"
-        } else {
-            return "$seconds"
+
+        var secondsString = seconds.toString()
+        if (seconds < 10L) {
+            secondsString = "0$seconds"
         }
+
+        if (hours != 0L) {
+            return "$hours:$minutes:$secondsString"
+        } else {
+            return "$minutes:$secondsString"
+        }
+    }
+
+    fun getFormattedPrefix(): String {
+        return plugin.config.getString("prefix", "[EasyBooster] ")!! + "§f"
     }
 }

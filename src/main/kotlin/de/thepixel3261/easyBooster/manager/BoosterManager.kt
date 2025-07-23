@@ -1,8 +1,11 @@
-package de.thepixel3261.easyBooster.manager;
+package de.thepixel3261.easyBooster.manager
 
 import de.thepixel3261.easyBooster.Main
+import de.thepixel3261.easyBooster.listener.BoosterMobListener
+import de.thepixel3261.easyBooster.listener.BoosterXPListener
 import de.thepixel3261.easyBooster.util.Parse
 import org.bukkit.GameMode
+import org.bukkit.Sound
 import org.bukkit.entity.Player
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
@@ -27,20 +30,51 @@ class BoosterManager private constructor(val plugin: Main) {
 
     fun applyBooster(player: Player, boosterName: String) {
         if (StorageManager(plugin).getBoosterAmount(player, boosterName) <= 0) {
-            player.sendMessage("§cYou don't have any ${getBoosterDisplayName(boosterName, player)} left!")
+            player.sendMessage(Parse(plugin).getFormattedPrefix() + "§cDu hast keine ${getBoosterDisplayName(boosterName, player)} §cübrig!")
             return
         }
 
         if (activeBoosters.containsKey(player)) {
             if (activeBoosters[player]!!.contains(boosterName)) {
-                player.sendMessage("§cYou already have this booster applied!")
+                player.sendMessage(Parse(plugin).getFormattedPrefix() + "§cDu hast diesen Booster bereits aktiviert!")
                 return
             }
         }
 
-        player.sendMessage(
-            "§aYou applied the booster §e${getBoosterDisplayName(boosterName, player)}§a!"
-        )
+        if (player.allowFlight) {
+            for (effect in plugin.config.getStringList("boosters.$boosterName.effect")) {
+                if (effect.lowercase().equals("fly")) {
+                    player.sendMessage(Parse(plugin).getFormattedPrefix() + "§cDu kannst diesen Booster nicht aktivieren, da du bereits fliegen kannst!")
+                    return
+                }
+            }
+        }
+
+        if (BoosterXPListener.getInstance(plugin).getXpMultiplier(player) != 1.0) {
+            for (effect in plugin.config.getStringList("boosters.$boosterName.effect")) {
+                if (effect.split(":")[0].lowercase() == ("xp")) {
+                    player.sendMessage(Parse(plugin).getFormattedPrefix() + "§cDu kannst diesen Booster nicht aktivieren, da du bereits einen XP Booster hast!")
+                    return
+                }
+            }
+        }
+
+        if (BoosterMobListener.getInstance(plugin).getMobMultiplier(player) != 1.0) {
+            for (effect in plugin.config.getStringList("boosters.$boosterName.effect")) {
+                if (effect.split(":")[0].lowercase() == ("mob")) {
+                    player.sendMessage(Parse(plugin).getFormattedPrefix() + "§cDu kannst diesen Booster nicht aktivieren, da du bereits einen Mob Booster hast!")
+                    return
+                }
+            }
+        }
+
+        player.sendMessage(Parse(plugin).getFormattedPrefix() +
+                "§aDu hast den Booster: §e${getBoosterDisplayName(boosterName, player)}§a aktiviert!")
+
+        player.sendMessage(Parse(plugin).getFormattedPrefix() + "Der Booster wird beim Verlassen des CityBuilds abgebrochen!")
+
+        player.playSound(player.location, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1F, 1F)
+
         StorageManager(plugin).takeBooster(player, boosterName, 1)
         val boosterDuration = plugin.getConfig().getInt("boosters.$boosterName.duration", 60)
 
@@ -60,30 +94,34 @@ class BoosterManager private constructor(val plugin: Main) {
             boosterStart = boosterStart + (player to mapOf(boosterName to (System.currentTimeMillis())))
         }
 
-        plugin.getConfig().getStringList("boosters.$boosterName.effect")?.forEach {
+        plugin.getConfig().getStringList("boosters.$boosterName.effect").forEach {
             it.lowercase()
-            when (it) {
+            when (it.split(":")[0]) {
                 "fly" -> {
                     player.allowFlight = true
-
                 }
                 "xp" -> {
-                    TODO(": Implement XP Booster")
+                    val multiplier = it.split(":")[1].toDouble()
+                    BoosterXPListener.getInstance(plugin).setXpMultiplier(player, multiplier)
+                }
+                "mob" -> {
+                    val multiplier = it.split(":")[1].toDouble()
+                    BoosterMobListener.getInstance(plugin).setMobMultiplier(player, multiplier)
                 }
                 else -> {
                     try {
                         val potionEffect = it.split(":")
-                        val potionName = potionEffect?.get(0)
-                        val potionAmplifier = potionEffect?.get(1)?.toInt()!! - 1
+                        val potionName = potionEffect.get(0)
+                        val potionAmplifier = potionEffect.get(1)?.toInt()!! - 1
                         player.addPotionEffect(
                             PotionEffect(
                                 PotionEffectType.getByName(potionName!!)!!,
                                 boosterDuration * 20,
-                                potionAmplifier!!
+                                potionAmplifier
                             )
                         )
                     } catch (e: Exception) {
-                        plugin.logger.severe("Error while applying booster: $boosterName: $e")
+                        plugin.logger.severe("Error while applying booster: $boosterName§f: $e")
                         return
                     }
                 }
@@ -91,6 +129,19 @@ class BoosterManager private constructor(val plugin: Main) {
         }
 
         removeBoosterLater(player, boosterName, boosterDuration)
+        sendMessageLater(player, boosterName, boosterDuration)
+    }
+
+    fun sendMessageLater(player: Player, boosterName: String, duration: Int) {
+        val notifyBefore = plugin.config.getInt("booster.notifyExpire", 0)
+        if (notifyBefore > 0) {
+            object : BukkitRunnable() {
+                override fun run() {
+                    player.sendMessage(Parse(plugin).getFormattedPrefix() + "§cDer Booster: §e${getBoosterDisplayName(boosterName, player)} §cwird in §e$notifyBefore §cSekunden ablaufen!")
+                    player.playSound(player.location, Sound.BLOCK_STONE_BREAK, 1F, 1F)
+                }
+            }.runTaskLater(plugin, (duration - notifyBefore) * 20L)
+        }
     }
 
     fun removeBoosterLater(player: Player, boosterName: String, duration: Int) {
@@ -118,9 +169,9 @@ class BoosterManager private constructor(val plugin: Main) {
     }
 
     fun removeBooster(player: Player, boosterName: String) {
-        player.sendMessage(
-            "§cYou removed the booster §e${getBoosterDisplayName(boosterName, player)}§c!"
-        )
+        player.sendMessage(Parse(plugin).getFormattedPrefix() +
+                "§cDein Booster: ${getBoosterDisplayName(boosterName, player)}§c ist abgelaufen!")
+        player.playSound(player.location, Sound.BLOCK_ANVIL_LAND, 1F, 1F)
 
         activeBoosters = if (activeBoosters.containsKey(player)) {
             if (activeBoosters[player]!!.contains(boosterName)) {
@@ -149,10 +200,23 @@ class BoosterManager private constructor(val plugin: Main) {
                     if (player.gameMode != GameMode.CREATIVE && player.gameMode != GameMode.SPECTATOR) {
                         player.allowFlight = false
                         player.isFlying = false
+                        val featherFallBack = plugin.config.getInt("booster.featherFallBack", 20)
+                        if (featherFallBack != 0) {
+                            player.addPotionEffect(
+                                PotionEffect(
+                                    PotionEffectType.SLOW_FALLING,
+                                    featherFallBack * 20,
+                                    1
+                                )
+                            )
+                        }
                     }
                 }
                 "xp" -> {
-                    TODO(": Implement XP Booster")
+                    BoosterXPListener.getInstance(plugin).removeXpMultiplier(player)
+                }
+                "mob" -> {
+                    BoosterMobListener.getInstance(plugin).removeMobMultiplier(player)
                 }
             }
         }
@@ -176,7 +240,7 @@ class BoosterManager private constructor(val plugin: Main) {
     }
 
     fun getBoosterDisplayName(boosterName: String, player: Player): String {
-        var boosterDisplayName: String
+        val boosterDisplayName: String
         if (plugin.config.getString("boosters.$boosterName.displayname", "")!!.isNotEmpty()) {
             boosterDisplayName = plugin.config.getString("boosters.$boosterName.displayname")!!
         } else {
@@ -195,8 +259,8 @@ class BoosterManager private constructor(val plugin: Main) {
 
         val state = if (active) "on" else "off"
 
-        var boosterLore: List<String>
-        if (plugin.config.getString("boosters.$boosterName.displayname", "")!!.isNotEmpty()) {
+        val boosterLore: List<String>
+        if (plugin.config.getString("boosters.$boosterName.lore", "")!!.isNotEmpty()) {
             boosterLore = plugin.config.getStringList("boosters.$boosterName.lore")
         } else {
             boosterLore = plugin.config.getStringList("booster.default.$state.lore")

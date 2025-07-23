@@ -1,5 +1,5 @@
 name: EasyBooster
-version: '1.0.0'
+version: '1.2.0'
 main: de.thepixel3261.easyBooster.Main
 api-version: '1.21'
 load: STARTUP
@@ -14,4 +14,7 @@ permissions:
     default: true
   booster.give:
     description: 'Permission to give boosters'
+    default: op
+  booster.item:
+    description: 'Permission to give the booster item'
     default: op

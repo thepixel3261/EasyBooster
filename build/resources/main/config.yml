@@ -1,5 +1,7 @@
+prefix: "§3[EasyBooster] "
+
 gui:
-  name: "§6§l%player_name%´s Boosters"
+  name: "§6§l%player_name%s Boosters"
   rows: 3
   filler: "GRAY_STAINED_GLASS_PANE"
 
@@ -14,7 +16,7 @@ storage:
 
 boosters:
   example: # ID of the booster
-    #displayname: "§6Example Booster" #(optional because default)
+    displayname: #"§6Example Booster" #(optional because default)
     lore:
       #- "§7This is an example booster" #(optional because default)
     icon:
@@ -22,11 +24,23 @@ boosters:
       "on": EMERALD
     slot: 13 #check:https://proxy.spigotmc.org/286cf93278ca679cec0f2a40528fd830418b75d4a/687474703a2f2f692e696d6775722e636f6d2f674b39706c476f2e706e67
     effect:
-      - "fly"
+      - "fly" #fly || xp:[multiplier] || mob:[multiplier]
       - "speed:2" #check:https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/potion/PotionEffectType.html (name:amplifier)
     duration: 45 #(in seconds)
+    effectTranslation:
+      - "Flug"
+      - "Geschwindigkeit 2"
 
 booster:
+  featherFallBack: 20 #Seconds how much feather fall should be given after a fly booster expires. 0 = disabled
+  notifyExpire: 20 #how many seconds before should the player be warned? 0 = disabled
+
+  item:
+    material: "FLOWER_BANNER_PATTERN"
+    name: "§6Booster-Rolle"
+    lore:
+      - "§7Booster: §6%booster-display-name%"
+
   default: # values only taken if not specified in the booster
     displayname: "§6%booster-name% Booster"
     "off":
