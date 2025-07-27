@@ -1,5 +1,5 @@
 name: EasyBooster
-version: '1.2.0'
+version: '1.4.0'
 main: de.thepixel3261.easyBooster.Main
 api-version: '1.21'
 load: STARTUP

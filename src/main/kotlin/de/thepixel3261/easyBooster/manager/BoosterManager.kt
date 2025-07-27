@@ -7,12 +7,17 @@ import de.thepixel3261.easyBooster.util.Parse
 import org.bukkit.GameMode
 import org.bukkit.Sound
 import org.bukkit.entity.Player
+import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
+import org.bukkit.event.Listener
+import org.bukkit.event.player.PlayerCommandSendEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import org.bukkit.scheduler.BukkitRunnable
+import org.eclipse.sisu.Priority
 
 
-class BoosterManager private constructor(val plugin: Main) {
+class BoosterManager private constructor(val plugin: Main): Listener {
 
     companion object {
         @Volatile
@@ -25,7 +30,7 @@ class BoosterManager private constructor(val plugin: Main) {
         }
     }
 
-    var activeBoosters: Map<Player, List<String>> = mapOf()
+    var activeBoosters: Map<Player, List<String>> = mutableMapOf()
     var boosterStart = mapOf<Player, Map<String, Long>>()
 
     fun applyBooster(player: Player, boosterName: String) {
@@ -41,29 +46,16 @@ class BoosterManager private constructor(val plugin: Main) {
             }
         }
 
-        if (player.allowFlight) {
-            for (effect in plugin.config.getStringList("boosters.$boosterName.effect")) {
-                if (effect.lowercase().equals("fly")) {
-                    player.sendMessage(Parse(plugin).getFormattedPrefix() + "§cDu kannst diesen Booster nicht aktivieren, da du bereits fliegen kannst!")
-                    return
-                }
-            }
-        }
-
-        if (BoosterXPListener.getInstance(plugin).getXpMultiplier(player) != 1.0) {
-            for (effect in plugin.config.getStringList("boosters.$boosterName.effect")) {
-                if (effect.split(":")[0].lowercase() == ("xp")) {
-                    player.sendMessage(Parse(plugin).getFormattedPrefix() + "§cDu kannst diesen Booster nicht aktivieren, da du bereits einen XP Booster hast!")
-                    return
-                }
-            }
-        }
-
-        if (BoosterMobListener.getInstance(plugin).getMobMultiplier(player) != 1.0) {
-            for (effect in plugin.config.getStringList("boosters.$boosterName.effect")) {
-                if (effect.split(":")[0].lowercase() == ("mob")) {
-                    player.sendMessage(Parse(plugin).getFormattedPrefix() + "§cDu kannst diesen Booster nicht aktivieren, da du bereits einen Mob Booster hast!")
-                    return
+        plugin.config.getStringList("boosters.$boosterName.effect").forEach { effect ->
+            val effect = effect.split(":")[0].lowercase()
+            if (activeBoosters.contains(player)) {
+                activeBoosters[player]!!.forEach { activeBooster ->
+                    plugin.config.getStringList("boosters.$activeBooster.effect").forEach { activeEffect ->
+                        val activeEffect = activeEffect.split(":")[0].lowercase()
+                        if (effect == activeEffect) {
+                            player.sendMessage(Parse(plugin).getFormattedPrefix() + "§cDu kannst diesen Booster nicht aktivieren, da du bereits einen Booster mit diesem Effekt aktiviert hast!")
+                        }
+                    }
                 }
             }
         }
@@ -89,9 +81,9 @@ class BoosterManager private constructor(val plugin: Main) {
         }
 
         if (boosterStart.containsKey(player)) {
-            boosterStart = boosterStart + (player to (boosterStart[player]!! + mapOf(boosterName to (System.currentTimeMillis()))))
+            boosterStart = (boosterStart + (player to (boosterStart[player]!! + mutableMapOf(boosterName to (System.currentTimeMillis()))))) as MutableMap<Player, Map<String, Long>>
         } else {
-            boosterStart = boosterStart + (player to mapOf(boosterName to (System.currentTimeMillis())))
+            boosterStart = (boosterStart + (player to mapOf(boosterName to (System.currentTimeMillis())))) as MutableMap<Player, Map<String, Long>>
         }
 
         plugin.getConfig().getStringList("boosters.$boosterName.effect").forEach {
@@ -193,9 +185,10 @@ class BoosterManager private constructor(val plugin: Main) {
             boosterStart
         }
 
+
         plugin.getConfig().getStringList("boosters.$boosterName.effect").forEach { effect ->
             effect.lowercase()
-            when (effect) {
+            when (effect.split(":")[0]) {
                 "fly" -> {
                     if (player.gameMode != GameMode.CREATIVE && player.gameMode != GameMode.SPECTATOR) {
                         player.allowFlight = false
@@ -266,5 +259,47 @@ class BoosterManager private constructor(val plugin: Main) {
             boosterLore = plugin.config.getStringList("booster.default.$state.lore")
         }
         return boosterLore
+    }
+
+    fun reapplyBoosters(player: Player) {
+        if (activeBoosters.containsKey(player)) {
+            activeBoosters[player]?.forEach { boosterName ->
+                plugin.config.getStringList("boosters.$boosterName.effect").forEach { effect ->
+                    val effect = effect.split(":")[0].lowercase()
+                    when (effect) {
+                        "fly" -> {
+
+                        }
+                        "xp" -> {
+
+                        }
+                        "mob" -> {
+
+                        } else -> {
+                            if (boosterStart.containsKey(player)) {
+                                if (boosterStart[player]!!.containsKey(boosterName)) {
+                                    if (boosterStart[player]!![boosterName] != null) {
+                                        val potionEffect = effect.split(":")[0]
+                                        val potionAmp = effect.split(":")[1].toIntOrNull() ?: 0
+                                        player.addPotionEffect(
+                                            PotionEffect(
+                                                PotionEffectType.getByName(potionEffect)!!,
+                                                (getBoosterTimeLeft(player, boosterName) * 20).toInt(),
+                                                potionAmp
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @EventHandler (priority = EventPriority.LOWEST)
+    fun onCommand(event: PlayerCommandSendEvent) {
+        reapplyBoosters(event.player)
     }
 }

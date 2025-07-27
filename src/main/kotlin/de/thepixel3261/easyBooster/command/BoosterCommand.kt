@@ -4,6 +4,7 @@ import de.thepixel3261.easyBooster.Main
 import de.thepixel3261.easyBooster.gui.BoosterGUI
 import de.thepixel3261.easyBooster.manager.ItemManager
 import de.thepixel3261.easyBooster.manager.StorageManager
+import org.bukkit.OfflinePlayer
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -75,13 +76,20 @@ class BoosterCommand(plugin: Main) : CommandExecutor, TabCompleter {
             4 -> {
                 if (args[0] == "give") {
                     if (player.hasPermission("easybooster.give")) {
-
                         val booster = args[2]
                         val amount = args[3].toInt()
 
-                        var target = plugin.server.getOfflinePlayer(args[1])
-                        if (UUID.fromString(args[1]) == null) {
-                            target = plugin.server.getOfflinePlayer(UUID.fromString(args[2]))
+                        var target: OfflinePlayer
+
+                        try {
+                            target = plugin.server.getOfflinePlayer(UUID.fromString(args[1]))
+                        } catch (e: IllegalArgumentException) {
+                            target = plugin.server.getOfflinePlayer(args[1])
+                        }
+
+                        if (!target.hasPlayedBefore()) {
+                            player.sendMessage("Unbekannter Spieler!")
+                            return true
                         }
 
                         plugin.config.getConfigurationSection("boosters")?.getKeys(false)?.forEach {
